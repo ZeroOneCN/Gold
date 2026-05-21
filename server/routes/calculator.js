@@ -141,6 +141,30 @@ router.post('/compute-multi', (req, res) => {
   // 汇总计算
   const equity = balance + totalPnl;
   const totalMarginRatio = totalMargin > 0 ? (equity / totalMargin) * 100 : 0;
+  const flThreshold = forced_liquidation_ratio * totalMargin;
+  const availableLoss = equity - flThreshold; // 全账户可承受的亏损额度
+
+  // 为每个仓位追加强平价（用全账户可承受亏损反推）
+  for (const r of results) {
+    const pos = positions[r.index - 1];
+    const contract = CONTRACTS[pos.instrument];
+    const lotUnits = contract.lot_units;
+    const lot = pos.lot_size;
+    const openPx = pos.open_price;
+    const orderType = pos.order_type;
+
+    let flPrice = null;
+    if (totalMargin > 0 && lot > 0 && lotUnits > 0) {
+      const move = availableLoss / (lot * lotUnits);
+      if (orderType === 'buy') {
+        flPrice = openPx - move;
+      } else {
+        flPrice = openPx + move;
+      }
+      flPrice = Math.max(0, Math.round(flPrice * 100) / 100);
+    }
+    r.forced_liquidation_price = flPrice;
+  }
 
   res.json({
     positions: results,

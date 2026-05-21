@@ -213,6 +213,14 @@ export default function Calculator() {
                             </span>
                           </>
                         )}
+                        {p.forced_liquidation_price != null && (
+                          <>
+                            <span style={{ color: 'var(--color-ink-subtle)' }}>强平价</span>
+                            <span className="font-mono text-right font-medium" style={{ color: 'var(--color-danger)' }}>
+                              ${p.forced_liquidation_price}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
