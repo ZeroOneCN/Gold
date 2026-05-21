@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+@theme {
+  /* Linear Design System Colors */
+  --color-primary: #5e6ad2;
+  --color-primary-hover: #828fff;
+  --color-primary-focus: #5e69d1;
+  --color-ink: #f7f8f8;
+  --color-ink-muted: #d0d6e0;
+  --color-ink-subtle: #8a8f98;
+  --color-ink-tertiary: #62666d;
+  --color-canvas: #010102;
+  --color-surface-1: #0f1011;
+  --color-surface-2: #141516;
+  --color-surface-3: #18191a;
+  --color-surface-4: #191a1b;
+  --color-hairline: #23252a;
+  --color-hairline-strong: #34343a;
+  --color-hairline-tertiary: #3e3e44;
+  --color-success: #27a644;
+  --color-danger: #e5484d;
+
+  /* Typography */
+  --font-sans: 'Inter', 'SF Pro Display', -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', ui-monospace, monospace;
+
+  /* Spacing */
+  --spacing-section: 96px;
+
+  /* Border Radius */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-xxl: 24px;
+  --radius-pill: 9999px;
+}
+
+/* Base Styles */
+body {
+  margin: 0;
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: -0.05px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-hairline-strong);
+  border-radius: var(--radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-hairline-tertiary);
+}
+
+/* ── Input / Textarea ── */
+input[type="text"],
+input[type="number"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+textarea {
+  background-color: var(--color-surface-1);
+  color: var(--color-ink);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input:focus, textarea:focus {
+  border-color: var(--color-primary-focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary-focus) 50%, transparent);
+}
+input::placeholder, textarea::placeholder {
+  color: var(--color-ink-tertiary);
+}
+
+/* ── Select / Dropdown — DESIGN.md Linear style ── */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: var(--color-surface-1);
+  color: var(--color-ink);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  padding: 10px 36px 10px 14px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.4;
+  outline: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  /* Custom lavender-blue chevron */
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%235e6ad2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 10px 6px;
+}
+select:hover {
+  border-color: var(--color-hairline-strong);
+  background-color: var(--color-surface-2);
+}
+select:focus {
+  border-color: var(--color-primary-focus);
+  background-color: var(--color-surface-1);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary-focus) 50%, transparent);
+  outline: none;
+}
+select:active {
+  background-color: var(--color-surface-1);
+}
+select option {
+  background-color: var(--color-surface-2);
+  color: var(--color-ink);
+  padding: 10px 14px;
+  font-size: 15px;
+}
+
+/* 防止 IE/Edge 点击 select 时闪烁 */
+select::-ms-expand {
+  display: none;
+}
+select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 var(--color-ink);
+}
+
+/* ── Button base ── */
+button {
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
