@@ -160,18 +160,18 @@ export default function Calculator() {
               <div style={CARD_STYLE}>
                 <h3 className="text-[18px] font-medium mb-4" style={{ color: 'var(--color-ink)' }}>汇总结果</h3>
                 <div className="space-y-3">
-                  <ResultRow label="仓位数量" value={`${result.summary.position_count} 个`} />
+                  <ResultRow label="仓位数量" value={`${result.summary.position_count || 0} 个`} />
                   <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px' }}>
-                    <ResultRow label="总合约价值" value={`$${result.summary.total_contract_value.toLocaleString()}`} />
-                    <ResultRow label="总保证金" value={`$${result.summary.total_margin.toLocaleString()}`} highlight />
-                    <ResultRow label="账户余额" value={`$${result.summary.balance.toLocaleString()}`} />
-                    <ResultRow label="净值(含浮动盈亏)" value={`$${result.summary.equity.toLocaleString()}`} />
-                    <ResultRow label="保证金比例" value={`${result.summary.margin_ratio}%`} color={
+                    <ResultRow label="总合约价值" value={`$${(result.summary.total_contract_value || 0).toLocaleString()}`} />
+                    <ResultRow label="总保证金" value={`$${(result.summary.total_margin || 0).toLocaleString()}`} highlight />
+                    <ResultRow label="账户余额" value={`$${(result.summary.balance || 0).toLocaleString()}`} />
+                    <ResultRow label="净值(含浮动盈亏)" value={`$${(result.summary.equity || 0).toLocaleString()}`} />
+                    <ResultRow label="保证金比例" value={`${result.summary.margin_ratio || 0}%`} color={
                       result.summary.margin_ratio > 1000 ? 'var(--color-success)' :
                       result.summary.margin_ratio > 200 ? 'var(--color-primary)' : 'var(--color-danger)'
                     } highlight />
                   </div>
-                  {result.summary.total_pnl !== null && (
+                  {result.summary.total_pnl != null && (
                     <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px' }}>
                       <ResultRow label="总预计盈亏" value={`$${result.summary.total_pnl}`} color={
                         result.summary.total_pnl > 0 ? 'var(--color-success)' : result.summary.total_pnl < 0 ? 'var(--color-danger)' : 'var(--color-ink)'
@@ -181,12 +181,12 @@ export default function Calculator() {
                   {/* 爆仓分析 */}
                   <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px', marginTop: '12px' }}>
                     <div className="text-[14px] font-semibold mb-3" style={{ color: 'var(--color-danger)' }}>爆仓分析（全账户）</div>
-                    <ResultRow label="爆仓净值阈值" value={`$${result.summary.fl_threshold.toLocaleString()}`} color="var(--color-danger)" />
-                    <ResultRow label="当前可承受亏损" value={`$${result.summary.available_loss.toLocaleString()}`} color={result.summary.available_loss > 0 ? 'var(--color-success)' : 'var(--color-danger)'} highlight />
-                    {result.summary.total_weighted_move !== null && (
+                    <ResultRow label="爆仓净值阈值" value={`$${(result.summary.fl_threshold || 0).toLocaleString()}`} color="var(--color-danger)" />
+                    <ResultRow label="当前可承受亏损" value={`$${(result.summary.available_loss || 0).toLocaleString()}`} color={result.summary.available_loss > 0 ? 'var(--color-success)' : 'var(--color-danger)'} highlight />
+                    {result.summary.total_weighted_move != null && (
                       <ResultRow label="触发爆仓需波动" value={`${result.summary.total_weighted_move}%`} color="var(--color-danger)" />
                     )}
-                    <ResultRow label="风险评级" value={result.summary.risk_level} color={
+                    <ResultRow label="风险评级" value={result.summary.risk_level || '--'} color={
                       result.summary.risk_level === '安全' ? 'var(--color-success)' :
                       result.summary.risk_level === '正常' ? 'var(--color-primary)' :
                       result.summary.risk_level === '警戒' ? 'var(--color-danger)' : 'var(--color-danger)'
