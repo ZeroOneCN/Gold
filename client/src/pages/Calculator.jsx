@@ -107,7 +107,38 @@ export default function Calculator() {
             <h3 className="text-[18px] font-medium mb-4" style={{ color: 'var(--color-ink)' }}>账户参数</h3>
             <div className="grid grid-cols-2 gap-4">
               <CalcField label="杠杆倍数" value={shared.leverage} onChange={v => updateShared('leverage', v)} type="number" hint="常用: 100/200/500" />
-              <CalcField label="账户余额 ($)" value={shared.balance} onChange={v => updateShared('balance', v)} type="number" hint="自动获取净值，可改" />
+              <div>
+                <label className="block text-[13px] mb-1.5" style={{ color: 'var(--color-ink-subtle)' }}>账户余额 ($)</label>
+                <div className="flex gap-1.5">
+                  <input type="number" value={shared.balance} onChange={e => updateShared('balance', e.target.value)} className="flex-1" style={{ borderTopRightRadius: 0, borderBottomRightRadius: 0 }} />
+                  <button
+                    onClick={() => {
+                      fetch('/api/stats/overview').then(r => r.json()).then(data => {
+                        if (data.capital?.equity && data.capital.equity > 0) {
+                          updateShared('balance', String(Math.round(data.capital.equity * 100) / 100));
+                        }
+                      }).catch(() => {});
+                    }}
+                    title="刷新净值"
+                    style={{
+                      backgroundColor: 'var(--color-surface-1)',
+                      border: '1px solid var(--color-hairline)',
+                      borderRadius: 'var(--radius-md)',
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                      padding: '6px 10px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+                    </svg>
+                  </button>
+                </div>
+                <span className="block text-[11px] mt-1" style={{ color: 'var(--color-ink-tertiary)' }}>点击右侧按钮从账户同步最新净值</span>
+              </div>
             </div>
             <div className="mt-3">
               <CalcField label="强平比例" value={shared.forced_liquidation_ratio} onChange={v => updateShared('forced_liquidation_ratio', v)} type="number" hint="默认 50%，即保证金比例低于此值时强平" />
