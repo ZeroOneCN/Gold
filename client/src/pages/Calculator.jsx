@@ -2,88 +2,87 @@ import { useState, useEffect } from 'react';
 
 const CARD_STYLE = { backgroundColor: 'var(--color-surface-1)', border: '1px solid var(--color-hairline)', borderRadius: 'var(--radius-lg)', padding: '28px' };
 const BTN_PRIMARY = { backgroundColor: 'var(--color-primary)', color: '#ffffff', fontWeight: 500, borderRadius: 'var(--radius-md)', padding: '12px 24px', border: 'none', cursor: 'pointer', fontSize: '16px' };
+const BTN_DANGER = { backgroundColor: 'var(--color-danger)', color: '#ffffff', fontWeight: 500, borderRadius: 'var(--radius-md)', padding: '6px 14px', border: 'none', cursor: 'pointer', fontSize: '14px' };
+const BTN_GHOST = { backgroundColor: 'var(--color-surface-1)', color: 'var(--color-ink)', fontWeight: 500, borderRadius: 'var(--radius-md)', padding: '8px 16px', border: '1px solid var(--color-hairline)', cursor: 'pointer', fontSize: '14px' };
 
-const CONTRACT_INFO = {
-  XAUUSD: { name: '黄金/美元 (XAUUSD)', lotUnits: 100, minLot: 0.01, maxLot: 100, typicalSpread: 0.30 },
-  XAGUSD: { name: '白银/美元 (XAGUSD)', lotUnits: 5000, minLot: 0.01, maxLot: 100, typicalSpread: 0.03 }
+const CONTRACTS = {
+  XAUUSD: { name: '黄金/美元', lotUnits: 100, minLot: 0.01, maxLot: 100 },
+  XAGUSD: { name: '白银/美元', lotUnits: 5000, minLot: 0.01, maxLot: 100 }
 };
 
-const DEFAULT_INPUTS = {
-  instrument: 'XAUUSD',
-  order_type: 'buy',
-  open_price: '4490.00',
-  lot_size: '0.01',
-  leverage: '500',
-  balance: '',
-  close_price: '4495.00',
-  forced_liquidation_ratio: '0.5'
-};
+const DEFAULT_POSITION = { instrument: 'XAUUSD', order_type: 'buy', open_price: '', lot_size: '0.01', close_price: '' };
+const DEFAULT_SHARED = { leverage: '500', balance: '', forced_liquidation_ratio: '0.5' };
 
-const STORAGE_KEY_INPUTS = 'gold_calc_inputs';
-const STORAGE_KEY_RESULT = 'gold_calc_result';
+const STORAGE_KEY = 'gold_calc_multi';
 
-function loadFromStorage(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
+function loadFromStorage(fallback) {
+  try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : fallback; }
+  catch { return fallback; }
 }
 
 export default function Calculator() {
-  const [inputs, setInputs] = useState(() => loadFromStorage(STORAGE_KEY_INPUTS, DEFAULT_INPUTS));
-  const [result, setResult] = useState(() => loadFromStorage(STORAGE_KEY_RESULT, null));
+  const saved = loadFromStorage(null);
+  const [positions, setPositions] = useState(saved?.positions || [{ ...DEFAULT_POSITION }]);
+  const [shared, setShared] = useState(saved?.shared || DEFAULT_SHARED);
+  const [result, setResult] = useState(saved?.result || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 输入参数变更时自动保存
+  // 自动保存
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_INPUTS, JSON.stringify(inputs));
-  }, [inputs]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ positions, shared, result }));
+  }, [positions, shared, result]);
 
-  // 计算结果变更时自动保存
+  // 首次加载时获取净值
   useEffect(() => {
-    if (result) {
-      localStorage.setItem(STORAGE_KEY_RESULT, JSON.stringify(result));
-    }
-  }, [result]);
-
-  // 首次加载时从统计 API 获取当前净值作为账户余额
-  useEffect(() => {
-    if (inputs.balance) return; // 已有值则跳过（来自 localStorage 或手动输入）
+    if (shared.balance) return;
     fetch('/api/stats/overview')
       .then(r => r.json())
       .then(data => {
         if (data.capital?.equity && data.capital.equity > 0) {
-          setInputs(prev => ({ ...prev, balance: String(data.capital.equity) }));
+          setShared(prev => ({ ...prev, balance: String(Math.round(data.capital.equity * 100) / 100) }));
         }
       })
       .catch(() => {});
   }, []);
 
-  const contract = CONTRACT_INFO[inputs.instrument];
+  const updateShared = (key, value) => setShared(prev => ({ ...prev, [key]: value }));
+  const updatePosition = (idx, key, value) => {
+    setPositions(prev => prev.map((p, i) => i === idx ? { ...p, [key]: value } : p));
+  };
+  const addPosition = () => setPositions(prev => [...prev, { ...DEFAULT_POSITION }]);
+  const removePosition = (idx) => {
+    if (positions.length <= 1) return;
+    setPositions(prev => prev.filter((_, i) => i !== idx));
+  };
 
   const handleCompute = async () => {
     setError('');
     setLoading(true);
     try {
-      const body = {};
-      Object.keys(inputs).forEach(k => {
-        const val = parseFloat(inputs[k]);
-        body[k] = isNaN(val) ? inputs[k] : val;
-      });
-      const res = await fetch('/api/calculator/compute', {
+      const body = {
+        positions: positions.map(p => ({
+          instrument: p.instrument,
+          order_type: p.order_type,
+          open_price: parseFloat(p.open_price) || 0,
+          lot_size: parseFloat(p.lot_size) || 0,
+          close_price: p.close_price ? parseFloat(p.close_price) : null
+        })),
+        leverage: parseFloat(shared.leverage) || 500,
+        balance: parseFloat(shared.balance) || 0,
+        forced_liquidation_ratio: parseFloat(shared.forced_liquidation_ratio) || 0.5
+      };
+      const res = await fetch('/api/calculator/compute-multi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
       const data = await res.json();
-      if (!res.ok) {
+      if (res.ok) {
+        setResult(data);
+      } else {
         setError(data.error || '计算失败');
         setResult(null);
-      } else {
-        setResult(data);
       }
     } catch (err) {
       setError('网络请求失败');
@@ -93,98 +92,148 @@ export default function Calculator() {
     }
   };
 
-  const updateInput = (key, value) => {
-    setInputs(prev => ({ ...prev, [key]: value }));
-  };
-
   return (
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-[32px] font-semibold tracking-[-0.8px]" style={{ color: 'var(--color-ink)' }}>交易计算</h1>
-        <p className="mt-1 text-[16px]" style={{ color: 'var(--color-ink-muted)' }}>保证金、强平价、盈亏计算，支持 XAUUSD 和 XAGUSD</p>
+        <p className="mt-1 text-[16px]" style={{ color: 'var(--color-ink-muted)' }}>多仓位保证金、强平价、盈亏计算，支持 XAUUSD 和 XAGUSD</p>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        {/* Input Panel */}
-        <div style={CARD_STYLE}>
-          <h3 className="text-[18px] font-medium mb-5" style={{ color: 'var(--color-ink)' }}>计算参数</h3>
-          <div className="space-y-4">
+        {/* 左侧：参数 + 仓位列表 */}
+        <div className="space-y-4">
+          {/* 共享参数 */}
+          <div style={CARD_STYLE}>
+            <h3 className="text-[18px] font-medium mb-4" style={{ color: 'var(--color-ink)' }}>账户参数</h3>
             <div className="grid grid-cols-2 gap-4">
-              <CalcSelect label="交易品种" value={inputs.instrument} onChange={v => updateInput('instrument', v)} options={[
-                { value: 'XAUUSD', label: 'XAUUSD 黄金' },
-                { value: 'XAGUSD', label: 'XAGUSD 白银' }
-              ]} />
-              <CalcSelect label="订单类型" value={inputs.order_type} onChange={v => updateInput('order_type', v)} options={[
-                { value: 'buy', label: '做多 (Buy)' },
-                { value: 'sell', label: '做空 (Sell)' }
-              ]} />
+              <CalcField label="杠杆倍数" value={shared.leverage} onChange={v => updateShared('leverage', v)} type="number" hint="常用: 100/200/500" />
+              <CalcField label="账户余额 ($)" value={shared.balance} onChange={v => updateShared('balance', v)} type="number" hint="自动获取净值，可改" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <CalcField label="开仓价格" value={inputs.open_price} onChange={v => updateInput('open_price', v)} type="number" hint={`合约单位: ${contract.lotUnits} oz/手`} />
-              <CalcField label="手数" value={inputs.lot_size} onChange={v => updateInput('lot_size', v)} type="number" hint={`最小 ${contract.minLot} / 最大 ${contract.maxLot}`} />
+            <div className="mt-3">
+              <CalcField label="强平比例" value={shared.forced_liquidation_ratio} onChange={v => updateShared('forced_liquidation_ratio', v)} type="number" hint="默认 50%，即保证金比例低于此值时强平" />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <CalcField label="杠杆倍数" value={inputs.leverage} onChange={v => updateInput('leverage', v)} type="number" hint="常用: 50/100/200/500" />
-              <CalcField label="账户余额 ($)" value={inputs.balance} onChange={v => updateInput('balance', v)} type="number" hint="自动获取当前净值，可手动修改" />
+          </div>
+
+          {/* 仓位列表 */}
+          <div style={CARD_STYLE}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[18px] font-medium" style={{ color: 'var(--color-ink)' }}>仓位列表</h3>
+              <button style={BTN_GHOST} onClick={addPosition}>+ 添加仓位</button>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <CalcField label="平仓价格（可选）" value={inputs.close_price} onChange={v => updateInput('close_price', v)} type="number" hint="留空则只计算保证金" />
-              <CalcField label="强平比例" value={inputs.forced_liquidation_ratio} onChange={v => updateInput('forced_liquidation_ratio', v)} type="number" hint="默认50%，即保证金比例低于此值时强平" />
+            <div className="space-y-3">
+              {positions.map((p, idx) => (
+                <div key={idx} className="p-4 rounded-md relative" style={{ backgroundColor: 'var(--color-canvas)', border: '1px solid var(--color-hairline)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[13px] font-mono" style={{ color: 'var(--color-ink-tertiary)' }}>仓位 #{idx + 1}</span>
+                    {positions.length > 1 && (
+                      <button style={BTN_DANGER} onClick={() => removePosition(idx)}>删除</button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <CalcSelect label="品种" value={p.instrument} onChange={v => updatePosition(idx, 'instrument', v)} options={[
+                      { value: 'XAUUSD', label: 'XAUUSD 黄金' }, { value: 'XAGUSD', label: 'XAGUSD 白银' }
+                    ]} />
+                    <CalcSelect label="方向" value={p.order_type} onChange={v => updatePosition(idx, 'order_type', v)} options={[
+                      { value: 'buy', label: '做多 Buy' }, { value: 'sell', label: '做空 Sell' }
+                    ]} />
+                    <CalcField label="开仓价格" value={p.open_price} onChange={v => updatePosition(idx, 'open_price', v)} type="number" />
+                    <CalcField label="手数" value={p.lot_size} onChange={v => updatePosition(idx, 'lot_size', v)} type="number" />
+                  </div>
+                  <div className="mt-3">
+                    <CalcField label="平仓价格（可选）" value={p.close_price} onChange={v => updatePosition(idx, 'close_price', v)} type="number" hint="填平仓价后可计算各仓位盈亏" />
+                  </div>
+                </div>
+              ))}
             </div>
-            <button style={BTN_PRIMARY} onClick={handleCompute} disabled={loading} className="w-full">
-              {loading ? '计算中...' : '开始计算'}
+            <button style={{ ...BTN_PRIMARY, width: '100%', marginTop: '16px' }} onClick={handleCompute} disabled={loading}>
+              {loading ? '计算中...' : `计算 ${positions.length} 个仓位`}
             </button>
-            {error && <div className="text-sm p-3 rounded-md" style={{ color: 'var(--color-danger)', backgroundColor: 'color-mix(in srgb, var(--color-danger) 15%, transparent)' }}>{error}</div>}
+            {error && <div className="mt-3 text-sm p-3 rounded-md" style={{ color: 'var(--color-danger)', backgroundColor: 'color-mix(in srgb, var(--color-danger) 15%, transparent)' }}>{error}</div>}
           </div>
         </div>
 
-        {/* Result Panel */}
-        <div style={CARD_STYLE}>
-          <h3 className="text-[18px] font-medium mb-5" style={{ color: 'var(--color-ink)' }}>计算结果</h3>
+        {/* 右侧：计算结果 */}
+        <div className="space-y-4">
           {result ? (
-            <div className="space-y-4">
-              <ResultRow label="交易品种" value={result.instrument} />
-              <ResultRow label="订单方向" value={result.order_type} color={result.order_type === '做多' ? 'var(--color-success)' : 'var(--color-danger)'} />
-              <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px' }}>
-                <ResultRow label="合约价值" value={`$${result.contract_value.toLocaleString()}`} />
-                <ResultRow label="所需保证金" value={`$${result.margin.toLocaleString()}`} highlight />
-                <ResultRow label="每点价值" value={`$${result.point_value}`} />
-              </div>
-              <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px' }}>
-                <ResultRow label="杠杆倍数" value={`${result.leverage}x`} />
-                <ResultRow label="账户余额" value={`$${result.balance.toLocaleString()}`} />
-                <ResultRow label="账户净值" value={`$${result.equity.toLocaleString()}`} />
-                <ResultRow label="保证金比例" value={`${result.margin_ratio}%`} color={
-                  result.margin_ratio > 1000 ? 'var(--color-success)' :
-                  result.margin_ratio > 200 ? 'var(--color-primary)' :
-                  'var(--color-danger)'
-                } highlight />
-              </div>
-              {result.pnl !== null && (
-                <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px' }}>
-                  <ResultRow label="预计盈亏" value={`$${result.pnl}`} color={
-                    result.pnl > 0 ? 'var(--color-success)' : result.pnl < 0 ? 'var(--color-danger)' : 'var(--color-ink)'
-                  } highlight />
+            <>
+              {/* 汇总卡片 */}
+              <div style={CARD_STYLE}>
+                <h3 className="text-[18px] font-medium mb-4" style={{ color: 'var(--color-ink)' }}>汇总结果</h3>
+                <div className="space-y-3">
+                  <ResultRow label="仓位数量" value={`${result.summary.position_count} 个`} />
+                  <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px' }}>
+                    <ResultRow label="总合约价值" value={`$${result.summary.total_contract_value.toLocaleString()}`} />
+                    <ResultRow label="总保证金" value={`$${result.summary.total_margin.toLocaleString()}`} highlight />
+                    <ResultRow label="账户余额" value={`$${result.summary.balance.toLocaleString()}`} />
+                    <ResultRow label="净值(含浮动盈亏)" value={`$${result.summary.equity.toLocaleString()}`} />
+                    <ResultRow label="保证金比例" value={`${result.summary.margin_ratio}%`} color={
+                      result.summary.margin_ratio > 1000 ? 'var(--color-success)' :
+                      result.summary.margin_ratio > 200 ? 'var(--color-primary)' : 'var(--color-danger)'
+                    } highlight />
+                  </div>
+                  {result.summary.total_pnl !== null && (
+                    <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px' }}>
+                      <ResultRow label="总预计盈亏" value={`$${result.summary.total_pnl}`} color={
+                        result.summary.total_pnl > 0 ? 'var(--color-success)' : result.summary.total_pnl < 0 ? 'var(--color-danger)' : 'var(--color-ink)'
+                      } highlight />
+                    </div>
+                  )}
                 </div>
-              )}
-              <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px' }}>
-                <ResultRow label="强平比例阈值" value={`${result.forced_liquidation_ratio * 100}%`} />
-                <ResultRow label="强平价格" value={`$${result.forced_liquidation_price?.toLocaleString()}`} color="var(--color-danger)" highlight />
               </div>
-            </div>
+
+              {/* 各仓位明细 */}
+              <div style={CARD_STYLE}>
+                <h3 className="text-[18px] font-medium mb-4" style={{ color: 'var(--color-ink)' }}>仓位明细</h3>
+                <div className="space-y-3">
+                  {result.positions.map((p, i) => (
+                    <div key={i} className="p-4 rounded-md" style={{ backgroundColor: 'var(--color-canvas)', border: '1px solid var(--color-hairline)' }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[14px] font-medium" style={{ color: 'var(--color-ink)' }}>
+                          #{p.index} {p.instrument}
+                        </span>
+                        <span className="text-[13px] font-medium px-2 py-0.5 rounded-full" style={{
+                          backgroundColor: p.order_type === '做多' ? 'color-mix(in srgb, var(--color-success) 15%, transparent)' : 'color-mix(in srgb, var(--color-danger) 15%, transparent)',
+                          color: p.order_type === '做多' ? 'var(--color-success)' : 'var(--color-danger)'
+                        }}>{p.order_type}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[14px]">
+                        <span style={{ color: 'var(--color-ink-subtle)' }}>开仓价</span>
+                        <span className="font-mono text-right" style={{ color: 'var(--color-ink)' }}>{p.open_price}</span>
+                        <span style={{ color: 'var(--color-ink-subtle)' }}>手数</span>
+                        <span className="font-mono text-right" style={{ color: 'var(--color-ink-muted)' }}>{p.lot_size}</span>
+                        <span style={{ color: 'var(--color-ink-subtle)' }}>保证金</span>
+                        <span className="font-mono text-right font-medium" style={{ color: 'var(--color-ink)' }}>${p.margin}</span>
+                        <span style={{ color: 'var(--color-ink-subtle)' }}>点值</span>
+                        <span className="font-mono text-right" style={{ color: 'var(--color-ink-muted)' }}>${p.point_value}</span>
+                        {p.pnl !== null && (
+                          <>
+                            <span style={{ color: 'var(--color-ink-subtle)' }}>盈亏</span>
+                            <span className="font-mono text-right font-medium" style={{ color: p.pnl >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                              {p.pnl >= 0 ? '+' : ''}{p.pnl}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           ) : (
-            <div className="flex items-center justify-center h-64" style={{ color: 'var(--color-ink-subtle)' }}>
-              <p className="text-sm">请在左侧输入参数后点击"开始计算"</p>
+            <div style={CARD_STYLE}>
+              <div className="flex items-center justify-center h-64" style={{ color: 'var(--color-ink-subtle)' }}>
+                <p className="text-[15px]">添加仓位并点击「计算 N 个仓位」查看结果</p>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Contract Info */}
+      {/* 合约规格 */}
       <div style={CARD_STYLE}>
         <h3 className="text-[18px] font-medium mb-5" style={{ color: 'var(--color-ink)' }}>合约规格参考</h3>
         <div className="grid grid-cols-2 gap-8">
-          {Object.entries(CONTRACT_INFO).map(([key, info]) => (
+          {Object.entries(CONTRACTS).map(([key, info]) => (
             <div key={key}>
               <h4 className="font-medium mb-2" style={{ color: 'var(--color-primary)' }}>{info.name}</h4>
               <div className="grid grid-cols-2 gap-y-1.5 text-sm">
@@ -194,8 +243,6 @@ export default function Calculator() {
                 <span className="font-mono" style={{ color: 'var(--color-ink-muted)' }}>{info.minLot}</span>
                 <span style={{ color: 'var(--color-ink-subtle)' }}>最大手数</span>
                 <span className="font-mono" style={{ color: 'var(--color-ink-muted)' }}>{info.maxLot}</span>
-                <span style={{ color: 'var(--color-ink-subtle)' }}>典型点差</span>
-                <span className="font-mono" style={{ color: 'var(--color-ink-muted)' }}>${info.typicalSpread}</span>
               </div>
             </div>
           ))}
@@ -208,9 +255,9 @@ export default function Calculator() {
 function CalcField({ label, value, onChange, type = 'text', hint }) {
   return (
     <div>
-      <label className="block text-[14px] mb-1.5" style={{ color: 'var(--color-ink-subtle)' }}>{label}</label>
+      <label className="block text-[13px] mb-1.5" style={{ color: 'var(--color-ink-subtle)' }}>{label}</label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)} className="w-full" step={type === 'number' ? 'any' : undefined} />
-      {hint && <span className="block text-[12px] mt-1" style={{ color: 'var(--color-ink-tertiary)' }}>{hint}</span>}
+      {hint && <span className="block text-[11px] mt-1" style={{ color: 'var(--color-ink-tertiary)' }}>{hint}</span>}
     </div>
   );
 }
@@ -218,7 +265,7 @@ function CalcField({ label, value, onChange, type = 'text', hint }) {
 function CalcSelect({ label, value, onChange, options }) {
   return (
     <div>
-      <label className="block text-[14px] mb-1.5" style={{ color: 'var(--color-ink-subtle)' }}>{label}</label>
+      <label className="block text-[13px] mb-1.5" style={{ color: 'var(--color-ink-subtle)' }}>{label}</label>
       <select value={value} onChange={e => onChange(e.target.value)} className="w-full">
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -228,11 +275,11 @@ function CalcSelect({ label, value, onChange, options }) {
 
 function ResultRow({ label, value, color, highlight }) {
   return (
-    <div className="flex justify-between items-center py-2">
-      <span className="text-[15px]" style={{ color: 'var(--color-ink-subtle)' }}>{label}</span>
+    <div className="flex justify-between items-center py-1.5">
+      <span className="text-[14px]" style={{ color: 'var(--color-ink-subtle)' }}>{label}</span>
       <span className="font-mono font-medium" style={{
         color: color || 'var(--color-ink)',
-        fontSize: highlight ? '20px' : '15px'
+        fontSize: highlight ? '18px' : '14px'
       }}>{value}</span>
     </div>
   );
