@@ -154,7 +154,7 @@ export default function Calculator() {
 
         {/* 右侧：计算结果 */}
         <div className="space-y-4">
-          {result ? (
+          {result && result.summary && result.positions ? (
             <>
               {/* 汇总卡片 */}
               <div style={CARD_STYLE}>
