@@ -166,6 +166,13 @@ router.post('/compute-multi', (req, res) => {
     r.forced_liquidation_price = flPrice;
   }
 
+  // 整体爆仓分析
+  const riskLevel = totalMarginRatio > 1000 ? '安全' : totalMarginRatio > 300 ? '正常' : totalMarginRatio > 150 ? '警戒' : '危险';
+  let totalWeightedMove = null;
+  if (totalMargin > 0 && totalContractValue > 0) {
+    totalWeightedMove = Math.round((availableLoss / totalContractValue) * 10000) / 100;
+  }
+
   res.json({
     positions: results,
     summary: {
@@ -177,7 +184,11 @@ router.post('/compute-multi', (req, res) => {
       balance,
       equity: Math.round(equity * 100) / 100,
       margin_ratio: Math.round(totalMarginRatio * 100) / 100,
-      forced_liquidation_ratio
+      forced_liquidation_ratio,
+      fl_threshold: Math.round(flThreshold * 100) / 100,
+      available_loss: Math.round(availableLoss * 100) / 100,
+      risk_level: riskLevel,
+      total_weighted_move: totalWeightedMove
     }
   });
 });

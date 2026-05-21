@@ -178,6 +178,20 @@ export default function Calculator() {
                       } highlight />
                     </div>
                   )}
+                  {/* 爆仓分析 */}
+                  <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: '12px', marginTop: '12px' }}>
+                    <div className="text-[14px] font-semibold mb-3" style={{ color: 'var(--color-danger)' }}>爆仓分析（全账户）</div>
+                    <ResultRow label="爆仓净值阈值" value={`$${result.summary.fl_threshold.toLocaleString()}`} color="var(--color-danger)" />
+                    <ResultRow label="当前可承受亏损" value={`$${result.summary.available_loss.toLocaleString()}`} color={result.summary.available_loss > 0 ? 'var(--color-success)' : 'var(--color-danger)'} highlight />
+                    {result.summary.total_weighted_move !== null && (
+                      <ResultRow label="触发爆仓需波动" value={`${result.summary.total_weighted_move}%`} color="var(--color-danger)" />
+                    )}
+                    <ResultRow label="风险评级" value={result.summary.risk_level} color={
+                      result.summary.risk_level === '安全' ? 'var(--color-success)' :
+                      result.summary.risk_level === '正常' ? 'var(--color-primary)' :
+                      result.summary.risk_level === '警戒' ? 'var(--color-danger)' : 'var(--color-danger)'
+                    } highlight />
+                  </div>
                 </div>
               </div>
 
