@@ -159,3 +159,27 @@ button {
   -webkit-tap-highlight-color: transparent;
   transition: opacity 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
+
+/* ── 日间模式 — 直接切换，无过渡 ── */
+[data-theme="light"] {
+  --color-canvas: #ffffff;
+  --color-surface-1: #f5f6f6;
+  --color-surface-2: #f6f7f7;
+  --color-surface-3: #eeeeef;
+  --color-surface-4: #e8e9ea;
+  --color-hairline: #d8dade;
+  --color-hairline-strong: #c4c6ca;
+  --color-hairline-tertiary: #b0b2b6;
+  --color-ink: #000000;
+  --color-ink-muted: #3a3d42;
+  --color-ink-subtle: #6b6f76;
+  --color-ink-tertiary: #8f939a;
+  transition: none !important;
+}
+
+[data-theme="light"] *,
+[data-theme="light"] *::before,
+[data-theme="light"] *::after {
+  transition: none !important;
+  animation: none !important;
+}

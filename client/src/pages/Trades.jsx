@@ -16,8 +16,10 @@ const STYLES = {
   btnDanger: { backgroundColor: 'transparent', color: 'var(--color-danger)', fontWeight: 500, borderRadius: 'var(--radius-md)', padding: '6px 12px', border: '1px solid transparent', cursor: 'pointer', fontSize: 14 },
 };
 
+const today = () => { const d = new Date(); return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`; };
+
 const EMPTY_FORM = {
-  trade_date: '2026/05/20', instrument: 'XAUUSD', order_type: 'buy',
+  trade_date: today(), instrument: 'XAUUSD', order_type: 'buy',
   open_price: '', lot_size: '0.01', commission: '-0.06', close_price: '',
   pnl: '', open_time: '', close_time: '', hold_time: '', remark: ''
 };

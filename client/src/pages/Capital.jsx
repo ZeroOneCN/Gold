@@ -4,7 +4,8 @@ const CARD_STYLE = { backgroundColor: 'var(--color-surface-1)', border: '1px sol
 const BTN_PRIMARY = { backgroundColor: 'var(--color-primary)', color: '#ffffff', fontWeight: 500, borderRadius: 'var(--radius-md)', padding: '10px 20px', border: 'none', cursor: 'pointer', fontSize: 15 };
 const BTN_SECONDARY = { backgroundColor: 'var(--color-surface-1)', color: 'var(--color-ink)', fontWeight: 500, borderRadius: 'var(--radius-md)', padding: '10px 20px', border: '1px solid var(--color-hairline)', cursor: 'pointer', fontSize: 15 };
 
-const EMPTY_FORM = { flow_date: '2026/05/21', flow_type: 'deposit', amount: '', remark: '' };
+const today = () => { const d = new Date(); return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`; };
+const EMPTY_FORM = { flow_date: today(), flow_type: 'deposit', amount: '', remark: '' };
 
 export default function Capital() {
   const [rows, setRows] = useState([]);
