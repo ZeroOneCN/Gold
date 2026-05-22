@@ -42,8 +42,8 @@
 ## 快速开始
 
 ### 环境要求
-- **Node.js** >= 18
-- **npm** >= 9
+- **Node.js** >= 22
+- **npm** >= 10
 
 ### 安装与启动
 
@@ -83,16 +83,10 @@ npm run client
 
 如需使用 AI 智能分析功能，需配置 DeepSeek API Key：
 
-**Windows：**
+**文件配置：**
 ```bash
-set DEEPSEEK_API_KEY=sk-xxxxxxxx
-npm start
-```
-
-**macOS / Linux：**
-```bash
-export DEEPSEEK_API_KEY=sk-xxxxxxxx
-npm start
+cp .env.example .env
+vim .env
 ```
 
 不配置 Key 不影响其他功能使用，点击分析时会提示「未配置 API Key」。
