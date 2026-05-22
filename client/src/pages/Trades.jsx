@@ -399,8 +399,8 @@ export default function Trades() {
               <FormField label="手续费" value={form.commission} onChange={v => setForm(f => ({ ...f, commission: v }))} type="number" />
               <FormField label="平仓价格" value={form.close_price} onChange={v => setForm(f => ({ ...f, close_price: v }))} type="number" />
               <FormField label="盈亏金额（自动）" value={form.pnl} onChange={v => setForm(f => ({ ...f, pnl: v }))} type="number" placeholder="输入开仓/平仓价自动计算" readOnly />
-              <FormField label="开仓时间" value={form.open_time} onChange={v => updateForm('open_time', v)} placeholder="16:30:11" />
-              <FormField label="平仓时间" value={form.close_time} onChange={v => updateForm('close_time', v)} placeholder="16:31:06" />
+              <FormField label="开仓时间" value={form.open_time} onChange={v => updateForm('open_time', v)} placeholder="00:13:00" />
+              <FormField label="平仓时间" value={form.close_time} onChange={v => updateForm('close_time', v)} placeholder="00:14:10" />
               <FormField label="持仓时间" value={form.hold_time} onChange={v => setForm(f => ({ ...f, hold_time: v }))} placeholder="自动计算" />
               <div className="col-span-2">
                 <label className="block text-[14px] mb-1.5" style={{ color: 'var(--color-ink-subtle)' }}>备注</label>
