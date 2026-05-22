@@ -34,9 +34,9 @@ export default function App() {
         {/* Logo area — 对应 DESIGN.md top-nav height 56px */}
         <div className="flex items-center gap-3 px-5" style={{ height: 56, borderBottom: '1px solid var(--color-hairline)' }}>
           <div className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'var(--color-primary)' }}>
-            <span className="text-white font-semibold text-sm tracking-tight">G</span>
+            <span className="text-white font-semibold text-sm tracking-tight">TA</span>
           </div>
-          <span className="font-semibold text-lg tracking-[-0.4px]" style={{ color: 'var(--color-ink)' }}>Gold Trade</span>
+          <span className="font-semibold text-lg tracking-[-0.4px]" style={{ color: 'var(--color-ink)' }}>Trading Analysis</span>
         </div>
 
         {/* Navigation — 大号菜单 */}

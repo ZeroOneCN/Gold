@@ -64,7 +64,7 @@ router.post('/analyze', async (req, res) => {
     `${k}: ${v.total}笔 盈${v.win}亏${v.loss} 净${Number(v.pnl).toFixed(2)}`
   ).join('\n');
 
-  const prompt = `你是一位专业的外汇黄金交易分析师。请根据以下交易记录进行客观分析，给出结论和建议。
+  const prompt = `你是一名拥有多年实操经验的外汇分析师交易员。请根据以下交易记录进行客观分析，给出结论和建议。
 
 ## 交易时段
 ${start_date} 至 ${end_date}，共 ${totalTrades} 笔交易
@@ -102,7 +102,7 @@ ${tradesSummary}
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: [
-          { role: 'system', content: '你是一位专业的外汇黄金交易分析师。回复使用中文，简洁有力。' },
+          { role: 'system', content: '你是一名拥有多年实操经验的外汇分析师交易员。回复使用中文，简洁有力。' },
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
