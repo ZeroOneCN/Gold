@@ -392,12 +392,12 @@ export default function Trades() {
             <h2 className="text-[22px] font-semibold mb-6 tracking-[-0.4px]" style={{ color: 'var(--color-ink)' }}>{editingId ? '编辑交易记录' : '新增交易记录'}</h2>
             <div className="grid grid-cols-2 gap-5">
               <FormField label="日期" value={form.trade_date} onChange={v => setForm(f => ({ ...f, trade_date: v }))} placeholder="yyyy/mm/dd" />
-              <FormSelect label="品种" value={form.instrument} onChange={v => setForm(f => ({ ...f, instrument: v }))} options={['XAUUSD', 'XAGUSD']} />
-              <FormSelect label="类型" value={form.order_type} onChange={v => setForm(f => ({ ...f, order_type: v }))} options={['buy', 'sell']} />
-              <FormField label="开仓价格" value={form.open_price} onChange={v => setForm(f => ({ ...f, open_price: v }))} type="number" />
+              <FormSelect label="品种" value={form.instrument} onChange={v => updateForm('instrument', v)} options={['XAUUSD', 'XAGUSD']} />
+              <FormSelect label="类型" value={form.order_type} onChange={v => updateForm('order_type', v)} options={['buy', 'sell']} />
+              <FormField label="开仓价格" value={form.open_price} onChange={v => updateForm('open_price', v)} type="number" />
               <FormField label="手数" value={form.lot_size} onChange={v => updateForm('lot_size', v)} type="number" />
               <FormField label="手续费" value={form.commission} onChange={v => setForm(f => ({ ...f, commission: v }))} type="number" />
-              <FormField label="平仓价格" value={form.close_price} onChange={v => setForm(f => ({ ...f, close_price: v }))} type="number" />
+              <FormField label="平仓价格" value={form.close_price} onChange={v => updateForm('close_price', v)} type="number" />
               <FormField label="盈亏金额（自动）" value={form.pnl} onChange={v => setForm(f => ({ ...f, pnl: v }))} type="number" placeholder="输入开仓/平仓价自动计算" readOnly />
               <FormField label="开仓时间" value={form.open_time} onChange={v => updateForm('open_time', v)} placeholder="00:13:00" />
               <FormField label="平仓时间" value={form.close_time} onChange={v => updateForm('close_time', v)} placeholder="00:14:10" />
